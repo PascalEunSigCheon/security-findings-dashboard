@@ -1,0 +1,26 @@
+# Using a lightweight Node.js base image
+ARG NODE_VERSION=24-alpine
+FROM node:${NODE_VERSION} AS base
+
+# Set working directory inside the container
+WORKDIR /app
+
+RUN chown node:node /app
+
+# Copy package.json and package-lock.json first for caching
+COPY --chown=node:node package.json package-lock.json ./
+
+# Switch to the node user BEFORE installing dependencies
+USER node 
+
+# Install dependencies 
+RUN npm ci --include=optional --no-audit
+
+# Copy the entire project (after dependencies for better caching)
+COPY --chown=node:node . . 
+
+# Expose SvelteKit default port
+EXPOSE 5173
+
+# Default command to start the SvelteKit development server
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]

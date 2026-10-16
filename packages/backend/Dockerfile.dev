@@ -1,0 +1,27 @@
+# Using a lightweight Node.js base image
+ARG NODE_VERSION=24-alpine
+FROM node:${NODE_VERSION} AS base
+
+# Set working directory inside the container
+WORKDIR /app
+
+# Copy package.json and package-lock.json first for caching
+COPY package.json package-lock.json ./
+
+# Ensure the correct permissions for the non-root user
+RUN chown -R node:node /app
+
+# Switch to the node user BEFORE installing dependencies
+USER node 
+
+# Install dependencies 
+RUN npm ci --include=optional --no-audit
+
+# Copy the entire project (after dependencies for better caching)
+COPY --chown=node:node . . 
+
+# Expose Nest.js default port
+EXPOSE 3001
+
+# Default command to start the Nest.js development server
+CMD ["npm", "run", "start:dev"]
