@@ -1,0 +1,19 @@
+// use prisma-8
+// Contract inferred from the live database schema. Edit as needed, then run `prisma contract emit`.
+
+model Vulnerabilities {
+  id          BigInt             @id(map: "vulnerabilities_pkey") @default(autoincrement())
+  source      VarChar(30)
+  externalId  VarChar(100)       @map("external_id")
+  title       String?
+  description String?
+  severity    VarChar(20)?
+  cvssScore   Numeric(3, 1)?     @map("cvss_score")
+  publishedAt TimestamptzString? @map("published_at")
+  sourceUrl   String?            @map("source_url")
+  rawData     Jsonb?             @map("raw_data")
+  importedAt  TimestamptzString  @default(now()) @map("imported_at")
+
+  @@unique([source, externalId], map: "vulnerabilities_source_external_id_key")
+  @@map("vulnerabilities")
+}
