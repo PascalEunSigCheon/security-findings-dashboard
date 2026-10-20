@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { CreateVulnerabilityInput } from './dto/create-vulnerability.input.js';
 import { UpdateVulnerabilityInput } from './dto/update-vulnerability.input.js';
+import { db } from '../prisma/db.js';
 
 @Injectable()
 export class VulnerabilitiesService {
@@ -23,8 +24,19 @@ export class VulnerabilitiesService {
     return 'This action adds a new vulnerability';
   }
 
-  findAll() {
-    return this.vulnerabilities;
+  async findAll() {
+    const vulnerabilities = await db.orm.public.Vulnerabilities.select(
+      'source',
+      'title',
+      'description',
+      'severity',
+      'cvssScore',
+      'publishedAt',
+      'sourceUrl',
+    )
+      .limit(2)
+      .all();
+    return vulnerabilities;
   }
 
   findOne(id: number) {
