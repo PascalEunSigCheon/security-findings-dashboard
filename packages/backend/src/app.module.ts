@@ -4,6 +4,7 @@ import { AppService } from './app.service.js';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { AppResolver } from './app.resolver.js';
+import { VulnerabilitiesModule } from './vulnerabilities/vulnerabilities.module.js';
 
 @Module({
   imports: [
@@ -12,6 +13,7 @@ import { AppResolver } from './app.resolver.js';
       autoSchemaFile: true,
       context: ({ req, res }: { req: any; res: any }) => ({ req, res }),
     }),
+    VulnerabilitiesModule,
   ],
   controllers: [AppController],
   providers: [AppService, AppResolver],
