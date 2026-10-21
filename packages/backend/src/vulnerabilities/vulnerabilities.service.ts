@@ -26,6 +26,7 @@ export class VulnerabilitiesService {
 
   async findAll() {
     const vulnerabilities = await db.orm.public.Vulnerabilities.select(
+      'id',
       'source',
       'title',
       'description',
@@ -36,7 +37,7 @@ export class VulnerabilitiesService {
     )
       .limit(2)
       .all();
-    return vulnerabilities;
+    return vulnerabilities.map((v) => ({ ...v, id: Number(v.id) }));
   }
 
   findOne(id: number) {

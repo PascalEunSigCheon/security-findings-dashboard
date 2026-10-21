@@ -20,7 +20,6 @@ export class VulnerabilitiesResolver {
 
   @Query(() => [Vulnerability], { name: 'vulnerabilities' })
   findAll() {
-    console.log('find all resolver');
     return this.vulnerabilitiesService.findAll();
   }
 
