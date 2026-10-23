@@ -16,8 +16,6 @@ query {
 `;
 
 export async function load() {
-	console.log('-- gett ----');
-	console.log(API_URL);
 	const response = await fetch(API_URL, {
 		method: 'POST',
 		headers: {

@@ -1,15 +1,66 @@
 <script lang="ts">
+  import Chart from "chart.js/auto";
   import type { PageProps } from './$types';
+  import { SvelteMap } from 'svelte/reactivity';
 
   let {data}: PageProps = $props();
-  console.log('---- page console----')
-  console.log(data)
 
+	let chartObject;
+
+  console.log("inside");
+  console.log(data.vulnerabilities)
+
+  const severityCount = new SvelteMap();
+  for (const v of data.vulnerabilities){
+      if (!v.severity){
+        severityCount.set('null', (severityCount.get('null') ?? 0) + 1);
+      } else {
+        severityCount.set(v.severity, (severityCount.get(v.severity) ?? 0) + 1);
+      }
+    }
+  console.log(severityCount)
+	
+	function severityCountHistogram(node, data) {
+		function setupChart() {
+      const severityOrder = ['critical', 'high', 'medium', 'low', 'null'];
+      const entries =  severityOrder.map((severity) => [severity, severityCount.get(severity)]);
+			chartObject = new Chart(node, {
+        type: "bar",
+        data: {
+          labels: entries.map(([key]) => key),
+          datasets: [
+            {
+              label: "# of vulnerabilities",
+              data: entries.map(([, val]) => val),
+              borderWidth: 1,
+            },
+          ],
+        },
+        options: {
+          indexAxis: 'y',
+          scales: {
+            y: {
+              beginAtZero: true,
+            },
+          },
+        },
+      });
+		}
+		setupChart(data)
+		return {
+			update(data) {
+				chartObject.destroy();
+				setupChart(data);
+			},
+			destroy() {
+				chartObject.destroy();
+			}
+		}
+	}
 
 </script>
 
-
-<main class="h-screen w-screen bg-black">
+<main class="h-screen w-screen bg-black text-white">
 <header class="p-5 h-18 flex items-center gap-8 border-b-4 border-white">
 <svg class="h-full" viewBox="0 0 1625 353" fill="none" xmlns="http://www.w3.org/2000/svg">
 <path d="M171.5 0C188.454 0 204.832 2.46022 220.299 7.04333C221.663 7.44743 223.122 7.37289 224.445 6.85099C237.637 1.64764 252.149 -0.654224 266.055 2.31543C286.37 6.4516 302.108 19.3322 314.312 33.2061C314.38 33.2834 314.448 33.3607 314.515 33.4379C316.112 35.2593 313.262 37.7808 311.391 36.2432C283.571 11.1874 244.467 9.77986 220.814 34.4199C219.071 36.0373 217.371 37.7026 215.71 39.4099C215.681 39.4398 215.657 39.4741 215.638 39.5114C215.597 39.5923 215.556 39.673 215.516 39.7542C215.495 39.7959 215.446 39.8162 215.402 39.8016C215.368 39.7904 215.331 39.7995 215.306 39.8253C193.689 62.2171 178.839 91.9582 166.038 121.965C138.996 187.643 122.33 258.49 110.661 328.915C109.708 334.874 108.751 341.061 107.888 347.075C107.459 350.064 104.907 352.295 101.888 352.295H32.5452C28.6931 352.295 25.8451 348.74 26.7517 344.996C29.8223 332.316 35.1246 312.078 37.3408 305.671C39.2048 300.337 41.0707 295.035 42.9437 289.76C43.6868 287.668 43.218 285.342 41.7651 283.663C15.7439 253.594 0 214.387 0 171.5C0 76.7832 76.7832 0 171.5 0ZM269.912 32.3944C271.154 32.3745 272.365 32.7799 273.365 33.5189C315.608 64.7566 343 114.929 343 171.5C343 266.217 266.217 343 171.5 343C160.307 343 149.366 341.926 138.771 339.879C135.618 339.269 133.581 336.212 134.297 333.081C136.013 325.587 138.465 318.432 141.368 311.735C142.473 309.184 145.239 307.834 147.979 308.301C155.624 309.607 163.483 310.287 171.5 310.287C248.15 310.287 310.287 248.15 310.287 171.5C310.287 120.428 282.7 75.8012 241.615 51.7033C238.045 49.6095 237.294 44.6376 240.615 42.1686C249.996 35.1944 259.608 32.5592 269.912 32.3944ZM171.5 32.7129C94.8502 32.7129 32.7129 94.8502 32.7129 171.5C32.7129 196.72 39.4399 220.369 51.1977 240.75C53.6261 244.96 59.6874 244.259 61.4487 239.729C79.8726 192.351 100.664 146.986 128.782 102.284C142.446 81.3234 157.03 60.4062 175.04 42.178C178.484 38.6925 176.4 32.7129 171.5 32.7129Z" fill="white"></path>
@@ -23,11 +74,13 @@
 <h1 class="text-white text-xl">Vunlerability overview</h1>
 </header>
 
-<h1>vulnerabilities</h1>
+<div class="h-80 w-full">
+  Total vulnerabilities: {data.vulnerabilities.length}
+  <canvas class="chart" use:severityCountHistogram={severityCount}></canvas>
+</div>
 
 {#each data.vulnerabilities as Vunlerability (Vunlerability.id)}
   <p>{Vunlerability.title}</p>
 {/each}
 
-<p>Visit <a href="https://svelte.dev/docs/kit">svelte.dev/docs/kit</a> to read the documentation</p>
 </main>
