@@ -10,6 +10,15 @@
   console.log("inside");
   console.log(data.vulnerabilities)
 
+// Convert to days
+  function ageInWeeks(publishedAt: string): number{
+    const publishedDate = new Date(publishedAt);
+    const now = new Date('2026-10-18T12:30:00');
+
+    const age = now.getTime() - publishedDate.getTime();
+    return Math.floor(age / (1000 * 60 * 60 * 24));
+  }
+
   const severityCount = new SvelteMap();
   for (const v of data.vulnerabilities){
       if (!v.severity){
@@ -19,6 +28,55 @@
       }
     }
   console.log(severityCount)
+
+  const ageCount = new SvelteMap();
+  for (const v of data.vulnerabilities){
+      if (!v.publishedAt){
+          continue;
+        }
+      const days = ageInWeeks(v.publishedAt);
+      let category;
+      if (days <= 3){
+          category = "1-3 days";
+        } else if (days <= 6) {
+            category = "4-6 days"
+          } else {
+              category = "7-10 days"
+            }
+      ageCount.set(category, (ageCount.get(category) ?? 0) + 1);
+    }
+    console.log('age----')
+    console.log(ageCount);
+
+    function ageCountDoughnut(node, data){
+        function setupChart(){
+          const ageOrder = ["1-3 days", "4-6 days", "7-10 days"];
+          const entries =  ageOrder.map((category) => [category, ageCount.get(category)]);
+          chartObject = new Chart(node, {
+              type: "doughnut",
+              data: {
+                labels: entries.map(([key]) => key),
+                datasets: [
+                {
+                    label: "# of vulnerabilities",
+                    data: entries.map(([, val]) => val),
+                    hoverOffset: 4
+                  }
+                ],
+                }
+            });
+          }
+		setupChart(data)
+		return {
+			update(data) {
+				chartObject.destroy();
+				setupChart(data);
+			},
+			destroy() {
+				chartObject.destroy();
+			}
+		}
+      }
 	
 	function severityCountHistogram(node, data) {
 		function setupChart() {
@@ -74,9 +132,13 @@
 <h1 class="text-white text-xl">Vunlerability overview</h1>
 </header>
 
-<div class="h-80 w-full">
+<div class="h-80 w-full mb-10">
   Total vulnerabilities: {data.vulnerabilities.length}
   <canvas class="chart" use:severityCountHistogram={severityCount}></canvas>
+</div>
+
+<div class="h-100 w-full">
+  <canvas class="chart" use:ageCountDoughnut={ageCount}></canvas>
 </div>
 
 {#each data.vulnerabilities as Vunlerability (Vunlerability.id)}
