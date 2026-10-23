@@ -34,9 +34,7 @@ export class VulnerabilitiesService {
       'cvssScore',
       'publishedAt',
       'sourceUrl',
-    )
-      .limit(2)
-      .all();
+    ).all();
     return vulnerabilities.map((v) => ({ ...v, id: Number(v.id) }));
   }
 
