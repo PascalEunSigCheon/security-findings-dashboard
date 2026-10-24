@@ -11,7 +11,7 @@
   console.log(data.vulnerabilities)
 
 // Convert to days
-  function ageInWeeks(publishedAt: string): number{
+  function ageInDays(publishedAt: string): number{
     const publishedDate = new Date(publishedAt);
     const now = new Date('2026-10-18T12:30:00');
 
@@ -34,7 +34,7 @@
       if (!v.publishedAt){
           continue;
         }
-      const days = ageInWeeks(v.publishedAt);
+      const days = ageInDays(v.publishedAt);
       let category;
       if (days <= 3){
           category = "1-3 days";
@@ -116,6 +116,69 @@
 		}
 	}
 
+  // # of vulnerabilities by severity by day
+  const severityCountByDay = new SvelteMap();
+  for (const v of data.vulnerabilities){
+      if (!v.publishedAt){
+          continue;
+        }
+      const severity = v.severity ?? 'null';
+      const days = ageInDays(v.publishedAt);
+      if (severityCountByDay.has(severity)) {
+        severityCountByDay.get(severity)[days] += 1;
+      } else {
+        severityCountByDay.set(severity, new Array(11).fill(0));
+      }
+    }
+    console.log('severity by day----')
+    console.log(severityCountByDay);
+  
+  const severityOrder = ['critical', 'high', 'medium', 'low', 'null'];
+  const severityCountByDayData = severityOrder.map((severity) => ({label: severity, data: severityCountByDay.get(severity)}));
+
+const labels = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+const vulnerabilitiesByDay = {
+  labels: labels,
+  datasets: severityCountByDayData
+};
+
+  function vulnerabilityByDayStackedBar(node, data){
+    function setupChart() {
+      chartObject = new Chart(node, {
+type: 'bar',
+  data: data,
+  options: {
+    plugins: {
+      title: {
+        display: true,
+        text: 'Chart.js Bar Chart - Stacked'
+      },
+    },
+    responsive: true,
+    scales: {
+      x: {
+        stacked: true,
+      },
+      y: {
+        stacked: true
+      }
+    }
+  }
+        }
+      );
+      }
+		setupChart(data)
+		return {
+			update(data) {
+				chartObject.destroy();
+				setupChart(data);
+			},
+			destroy() {
+				chartObject.destroy();
+			}
+		}
+    }
+  
 </script>
 
 <main class="h-screen w-screen bg-black text-white">
@@ -141,8 +204,33 @@
   <canvas class="chart" use:ageCountDoughnut={ageCount}></canvas>
 </div>
 
+<div class="h-100 w-full">
+  <canvas class="chart" use:vulnerabilityByDayStackedBar={vulnerabilitiesByDay}></canvas>
+</div>
+
+<table class="text-black">
+  <thead>
+    <tr>
+      <th>Title</th>
+      <th>CVSS Score</th>
+      <th>Description</th>
+      <th>Published At</th>
+      <th>Severity</th>
+      <th>Source URL</th>
+    </tr>
+  </thead>
+  <tbody>
 {#each data.vulnerabilities as Vunlerability (Vunlerability.id)}
-  <p>{Vunlerability.title}</p>
+    <tr>
+      <td>{Vunlerability.title}</td>
+      <td>{Vunlerability.cvssScore}</td>
+      <td>{Vunlerability.description}</td>
+      <td>{Vunlerability.publishedAt}</td>
+      <td>{Vunlerability.severity}</td>
+      <td>{Vunlerability.sourceUrl}</td>
+    </tr>
 {/each}
+  </tbody>
+</table>
 
 </main>
